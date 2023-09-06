@@ -1,0 +1,30 @@
+worker_processes  2;
+user              {{ nginx_user }};
+pid /var/run/nginx/nginx.pid;
+
+events {
+    use           epoll;
+    worker_connections  128;
+}
+
+error_log         /var/log/nginx_error.log info;
+
+http {
+    server_tokens off;
+    charset       utf-8;
+
+    access_log    /var/log/nginx_access.log  combined;
+
+    server {
+        server_name   _;
+        listen        80;
+
+        error_page    500 502 503 504  /50x.html;
+
+        location      / {
+            root      html;
+        }
+
+    }
+
+}

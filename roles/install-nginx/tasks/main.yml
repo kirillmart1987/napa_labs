@@ -1,0 +1,68 @@
+- name: Download nginx
+  get_url:
+    url: "{{ nginx_url }}"
+    dest: /tmp/nginx
+    mode: '0750'
+
+- name: Check binary
+  shell: "/tmp/nginx -h"
+  register: result
+  failed_when: result.rc != 0
+
+- name: Add nginx_user
+  user:
+    name: "{{ nginx_user }}"
+
+- name: Create NGINX_CONF_DIR dir
+  file:
+    path: "{{ NGINX_CONF_DIR }}"
+    state: directory
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: '0700'
+
+- name: Get Service Status
+  systemd:
+    name: "nginx"
+  register: result
+
+- set_fact:
+    started: "{{ (result.status.ActiveState == 'Active') | ternary(true, false) }}"
+
+- debug:
+    var: result.status.ActiveState
+
+- name: Copy nginx.conf
+  template:
+    src: "{{ item }}"
+    dest: "{{ NGINX_CONF_DIR }}/nginx.conf"
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: '0600'
+  with_fileglob:
+    - 'templates/nginx/*'
+  notify: start nginx
+
+- name: Copy systemd unit
+  template:
+    src: "templates/systemd.j2"
+    dest: /etc/systemd/system/nginx.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: start nginx
+
+- name: Copy nginx to dest
+  copy:
+    src: /tmp/nginx
+    dest: /bin/nginx
+    remote_src: true
+    owner: "{{ nginx_user }}"
+    group: "{{ nginx_user }}"
+    mode: '0755'
+  notify: start nginx
+
+- name: Remove tmp file
+  file:
+    path: /tmp/nginx
+    state: absent

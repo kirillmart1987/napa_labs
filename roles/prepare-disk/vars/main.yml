@@ -1,0 +1,2 @@
+filesystem: ext4
+device: /dev/sdb

@@ -1,0 +1,4 @@
+#nginx_url: "https://example.com/registry/nginx_1.0.0"
+nginx_url: "https://github.com/jirutka/nginx-binaries/raw/binaries/nginx-1.18.0-x86_64-linux"
+nginx_user: "nginx"
+NGINX_CONF_DIR: "/etc/nginx"

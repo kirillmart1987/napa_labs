@@ -1,0 +1,8 @@
+---
+
+- name: Roles config
+  hosts: webserver
+  become: true
+  roles:
+    - prepare-disk
+    - install-nginx

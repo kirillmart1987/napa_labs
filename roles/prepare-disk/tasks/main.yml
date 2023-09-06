@@ -1,0 +1,63 @@
+- name: Install parted
+  apt:
+    name: parted
+    state: present
+
+- name: Check /data dir
+  stat:
+    path: /data
+  register: data_path
+
+- debug: var=data_path
+
+- block:
+  - name: Check if /data alredy mounted
+    shell: mountpoint -q /data
+    register: dir_stat
+    failed_when: False
+    changed_when: False
+
+  - name: Alredy mounted
+    when: dir_stat.rc != 1
+    fail: msg="/data is a mountpoint"
+    failed_when: dir_stat.rc != 1
+  when: data_path.stat.exists and data_path.stat.isdir
+
+- name: Read device information
+  parted: device={{ device }} unit=MiB
+  register: disk_info
+
+- name: Device {{ device }} alredy have partions
+  when: disk_info.partitions|length > 0
+  fail: msg="Device {{ device }} alredy have partions"
+  failed_when: disk_info.partitions|length > 0
+
+- name: Create partition
+  parted:
+    device: "{{ device }}"
+    label: gpt
+    name: disk-ssd
+    number: 1
+    part_start: "0%"
+    part_end: "100%"
+    state: present
+
+- name: Create fs
+  filesystem:
+    fstype: "{{ filesystem }}"
+    dev: "{{ device }}1"
+
+- name: Add label
+  shell: 'tune2fs -L "disk-ssd" {{ device }}1'
+
+- name: Create /data dir
+  file:
+    path: /data
+    state: directory
+
+- name: Mount device
+  mount:
+    path: /data
+    src: LABEL=disk-ssd
+    fstype: ext4
+    state: mounted

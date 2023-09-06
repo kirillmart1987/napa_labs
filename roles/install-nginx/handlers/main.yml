@@ -1,0 +1,16 @@
+- name: start nginx
+  systemd:
+    state: restarted
+    name: nginx
+    daemon_reload: true
+  environment:
+        NGINX_CONF_DIR: "{{ NGINX_CONF_DIR }}"
+
+- name: restart nginx
+  systemd:
+    state: restarted
+    name: nginx
+    daemon_reload: true
+  environment:
+        NGINX_CONF_DIR: "{{ NGINX_CONF_DIR }}"
+
